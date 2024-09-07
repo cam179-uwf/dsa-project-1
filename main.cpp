@@ -4,6 +4,8 @@
 #include <random>
 #include <iomanip>
 
+#include "vigenere-cipher.hpp"
+
 int main(int argc, char** argv)
 {
     std::ifstream ifs("names.txt");
@@ -14,7 +16,8 @@ int main(int argc, char** argv)
         return EXIT_FAILURE;
     }
 
-    std::ofstream ofs("rawdata.txt");
+    // raw data out file stream
+    std::ofstream rawdataOfs("rawdata.txt");
 
     // set up our random number generator
     std::random_device rd;
@@ -42,14 +45,41 @@ int main(int argc, char** argv)
             }
 
             // write our userid and new password to the rawdata.txt file
-            ofs << std::left << std::setw(15) << word << std::setw(15) << password << '\n';
+            rawdataOfs << std::left << std::setw(15) << word << std::setw(15) << password << '\n';
             continue;
         }
 
         ++columnIndex;
     }
 
+    // raw data in file stream
+    std::ifstream rawdataIfs("rawdata.txt");
+
+    if (!ifs.is_open())
+    {
+        std::cout << "The file rawdata.txt could not be opened!" << std::endl;
+        return EXIT_FAILURE;
+    }
+
+    // encrypted data out file stream
+    std::ofstream edataOfs("encrypteddata.txt");
+
+    VigenereCipher vc;
+
+    while (!rawdataIfs.eof())
+    {
+        rawdataIfs >> word;
+        std::string userid = word;
+
+        rawdataIfs >> word;
+        std::string password = word;
+
+        edataOfs << std::left << std::setw(15) << userid << std::setw(15) << vc.get_encrypted(password) << '\n';
+    }
+
     ifs.close();
-    ofs.close();
+    rawdataOfs.close();
+    rawdataIfs.close();
+    edataOfs.close();
     return EXIT_SUCCESS;
 }

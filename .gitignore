@@ -1,4 +1,4 @@
 .vscode/
 main
-main.exe
-rawdata.txt
+*.exe
+*.txt
