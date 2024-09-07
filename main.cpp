@@ -5,6 +5,7 @@
 #include <iomanip>
 
 #include "vigenere-cipher.hpp"
+#include "hashtable.hpp"
 
 int main(int argc, char** argv)
 {
@@ -65,6 +66,9 @@ int main(int argc, char** argv)
     std::ofstream edataOfs("encrypteddata.txt");
 
     VigenereCipher vc;
+    HashTable<std::string> hashTable(40);
+
+    std::cout << "Creating encrypted passwords file and hash table. This make take a few seconds..." << std::endl;
 
     while (!rawdataIfs.eof())
     {
@@ -74,8 +78,14 @@ int main(int argc, char** argv)
         rawdataIfs >> word;
         std::string password = word;
 
-        edataOfs << std::left << std::setw(15) << userid << std::setw(15) << vc.get_encrypted(password) << '\n';
+        std::string encryptedPwd = vc.get_encrypted(password);
+
+        hashTable.push(userid, encryptedPwd);
+
+        edataOfs << std::left << std::setw(15) << userid << std::setw(15) << encryptedPwd << '\n';
     }
+
+    std::cout << "Found SMITH: " << *hashTable.find("SMITH") << std::endl;
 
     ifs.close();
     rawdataOfs.close();

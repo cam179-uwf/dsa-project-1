@@ -35,7 +35,7 @@ VigenereCipher::VigenereCipher(const VigenereCipher& other)
 
 VigenereCipher& VigenereCipher::operator=(const VigenereCipher& other)
 {
-
+    return *this;
 }
 
 std::string VigenereCipher::get_encrypted(const std::string& value)
