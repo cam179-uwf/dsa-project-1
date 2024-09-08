@@ -61,7 +61,7 @@ struct Bucket
         current->next = node;
     }
 
-    Node<T>* find(std::string key)
+    Node<T>* find(const std::string& key)
     {
         Node<T>* current = root;
 
@@ -102,6 +102,11 @@ class HashTable
 public:
     HashTable(const int& numberOfBuckets)
     {
+        if (numberOfBuckets < 1)
+        {
+            std::__throw_out_of_range("The number of buckets in a hash table must be more than or equal to one.");
+        }
+
         _numberOfBuckets = numberOfBuckets;
         _buckets = new Bucket<T>[_numberOfBuckets];
     }
@@ -110,6 +115,9 @@ public:
     {
         delete[] _buckets;
     }
+
+    HashTable(HashTable<T>& other) = delete;
+    HashTable<T>& operator=(HashTable<T>& other) = delete;
 
     void push(const std::string& key, const T& value)
     {
