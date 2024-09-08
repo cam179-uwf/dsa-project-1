@@ -7,14 +7,20 @@
 #include "vigenere-cipher.hpp"
 #include "hashtable.hpp"
 
-int main(int argc, char** argv)
+struct Entry 
+{
+    std::string userid;
+    std::string password;
+};
+
+void createRawDataFile(HashTable<std::string>& hashTable)
 {
     std::ifstream ifs("names.txt");
 
     if (!ifs.is_open())
     {
         std::cout << "The file names.txt could not be opened!" << std::endl;
-        return EXIT_FAILURE;
+        exit(EXIT_FAILURE);
     }
 
     // raw data out file stream
@@ -45,6 +51,8 @@ int main(int argc, char** argv)
                 password += dist(eng);
             }
 
+            hashTable.push(word, password);
+
             // write our userid and new password to the rawdata.txt file
             rawdataOfs << std::left << std::setw(15) << word << std::setw(15) << password << '\n';
             continue;
@@ -53,43 +61,138 @@ int main(int argc, char** argv)
         ++columnIndex;
     }
 
+    ifs.close();
+    rawdataOfs.close();
+}
+
+void createEncryptedDataFile(VigenereCipher& cipher)
+{
     // raw data in file stream
     std::ifstream rawdataIfs("rawdata.txt");
 
-    if (!ifs.is_open())
+    if (!rawdataIfs.is_open())
     {
         std::cout << "The file rawdata.txt could not be opened!" << std::endl;
-        return EXIT_FAILURE;
+        exit(EXIT_FAILURE);
     }
 
     // encrypted data out file stream
     std::ofstream edataOfs("encrypteddata.txt");
-
-    VigenereCipher vc;
-    HashTable<std::string> hashTable(40);
-
-    std::cout << "Creating encrypted passwords file and hash table. This make take a few seconds..." << std::endl;
+    std::string userid;
+    std::string password;
 
     while (!rawdataIfs.eof())
     {
-        rawdataIfs >> word;
-        std::string userid = word;
+        rawdataIfs >> userid;
+        rawdataIfs >> password;
 
-        rawdataIfs >> word;
-        std::string password = word;
-
-        std::string encryptedPwd = vc.get_encrypted(password);
-
-        hashTable.push(userid, encryptedPwd);
+        std::string encryptedPwd = cipher.get_encrypted(password);
 
         edataOfs << std::left << std::setw(15) << userid << std::setw(15) << encryptedPwd << '\n';
     }
 
-    std::cout << "Found SMITH: " << *hashTable.find("SMITH") << std::endl;
-
-    ifs.close();
-    rawdataOfs.close();
     rawdataIfs.close();
     edataOfs.close();
+}
+
+int main(int argc, char** argv)
+{
+    HashTable<std::string> hashTable(40);
+    VigenereCipher cipher;
+
+    std::cout << "Creating encrypted passwords file and hash table. This make take a few seconds..." << std::endl;
+
+    createRawDataFile(hashTable);
+    createEncryptedDataFile(cipher);
+
+    std::ifstream ifs("rawdata.txt");
+
+    if (!ifs.is_open())
+    {
+        std::cout << "The file encrypteddata.txt could not be opened!" << std::endl;
+        return EXIT_FAILURE;
+    }
+
+    int row = 0;
+    Entry fileEntries[5];
+    std::string userid;
+    std::string password;
+
+    while (!ifs.eof())
+    {
+        ifs >> userid;
+        ifs >> password;
+
+        switch (row)
+        {
+            case 0:
+                fileEntries[0].userid = userid;
+                fileEntries[0].password = password;
+                break;
+            case 2:
+                fileEntries[1].userid = userid;
+                fileEntries[1].password = password;
+                break;
+            case 4:
+                fileEntries[2].userid = userid;
+                fileEntries[2].password = password;
+                break;
+            case 6:
+                fileEntries[3].userid = userid;
+                fileEntries[3].password = password;
+                break;
+            case 8:
+                fileEntries[4].userid = userid;
+                fileEntries[4].password = password;
+                break;
+        }
+
+        ++row;
+
+        if (row > 8)
+            break;
+    }
+
+    std::cout << std::endl;
+    std::cout << "Legal:\n" << std::endl;
+    std::cout << std::left << std::setw(15) << "Userid";
+    std::cout << std::left << std::setw(20) << "Password(file)";
+    std::cout << std::left << std::setw(20) << "Password(table/un)";
+    std::cout << std::left << std::setw(15) << "Result";
+    std::cout << std::endl;
+
+    for (int i = 0; i < 5; ++i)
+    {
+        std::string fileEncryptedPassword = cipher.get_encrypted(fileEntries[i].password);
+        std::string hashedEncryptedPwd = cipher.get_encrypted(*hashTable.find(fileEntries[i].userid));
+
+        std::cout << std::left << std::setw(15) << fileEntries[i].userid;
+        std::cout << std::left << std::setw(20) << fileEncryptedPassword;
+        std::cout << std::left << std::setw(20) << hashedEncryptedPwd;
+        std::cout << std::left << std::setw(15) << (fileEncryptedPassword == hashedEncryptedPwd ? "match" : "no match");
+        std::cout << std::endl; 
+    }
+
+    std::cout << std::endl;
+    std::cout << "Illegal:\n" << std::endl;
+    std::cout << std::left << std::setw(15) << "Userid";
+    std::cout << std::left << std::setw(20) << "Password(mod)";
+    std::cout << std::left << std::setw(20) << "Password(table/un)";
+    std::cout << std::left << std::setw(15) << "Result";
+    std::cout << std::endl;
+
+    for (int i = 0; i < 5; ++i)
+    {
+        fileEntries[i].password[0] = 'z';
+        std::string fileEncryptedPassword = cipher.get_encrypted(fileEntries[i].password);
+        std::string hashedEncryptedPwd = cipher.get_encrypted(*hashTable.find(fileEntries[i].userid));
+
+        std::cout << std::left << std::setw(15) << fileEntries[i].userid;
+        std::cout << std::left << std::setw(20) << fileEncryptedPassword;
+        std::cout << std::left << std::setw(20) << hashedEncryptedPwd;
+        std::cout << std::left << std::setw(15) << (fileEncryptedPassword == hashedEncryptedPwd ? "match" : "no match");
+        std::cout << std::endl; 
+    }
+
     return EXIT_SUCCESS;
 }
