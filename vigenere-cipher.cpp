@@ -23,11 +23,12 @@ VigenereCipher::VigenereCipher(const std::string& key)
     }
 }
 
-VigenereCipher::~VigenereCipher()
-{
-    
-}
+VigenereCipher::~VigenereCipher() { }
 
+/**
+ * Used for encrypting lowercase character strings.
+ * @returns The encrypted lowercase character string.
+ */
 std::string VigenereCipher::get_encrypted(const std::string& value)
 {
     for (auto c : value)
@@ -61,6 +62,10 @@ std::string VigenereCipher::get_encrypted(const std::string& value)
     return result;
 }
 
+/**
+ * Used for decrypting lowercase character strings.
+ * @returns The decrypted lowercase character string.
+ */
 std::string VigenereCipher::get_decrypted(const std::string& value)
 {
     for (auto c : value)

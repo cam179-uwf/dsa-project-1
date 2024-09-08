@@ -7,12 +7,19 @@
 #include "vigenere-cipher.hpp"
 #include "hashtable.hpp"
 
+/**
+ * Used for keeping track of some data.
+ */
 struct Entry 
 {
     std::string userid;
     std::string password;
 };
 
+/**
+ * Creates the rawdata.txt file.
+ * Generates random passwords for each userid found in the names.txt file.
+ */
 void createRawDataFile()
 {
     std::ifstream ifs("names.txt");
@@ -24,7 +31,7 @@ void createRawDataFile()
     }
 
     // raw data out file stream
-    std::ofstream rawdataOfs("rawdata.txt");
+    std::ofstream rawDataOfs("rawdata.txt");
 
     // set up our random number generator
     std::random_device rd;
@@ -34,6 +41,10 @@ void createRawDataFile()
 
     // set up our initial variables
     std::string word;
+
+    // we start on index 3 so that
+    // the first line of the rawdata.txt
+    // is actually read
     int columnIndex = 3;
 
     // read the names.txt file
@@ -52,7 +63,7 @@ void createRawDataFile()
             }
 
             // write our userid and new password to the rawdata.txt file
-            rawdataOfs << std::left << std::setw(15) << word << std::setw(15) << password << '\n';
+            rawDataOfs << std::left << std::setw(15) << word << std::setw(15) << password << '\n';
             continue;
         }
 
@@ -60,68 +71,76 @@ void createRawDataFile()
     }
 
     ifs.close();
-    rawdataOfs.close();
+    rawDataOfs.close();
 }
 
+/**
+ * Creates the encrypteddata.txt file.
+ * Encrypts the passwords written to the rawdata.txt file.
+ */
 void createEncryptedDataFile(VigenereCipher& cipher, HashTable<std::string>& hashTable)
 {
     // raw data in file stream
-    std::ifstream rawdataIfs("rawdata.txt");
+    std::ifstream rawDataIfs("rawdata.txt");
 
-    if (!rawdataIfs.is_open())
+    if (!rawDataIfs.is_open())
     {
         std::cout << "The file rawdata.txt could not be opened!" << std::endl;
         exit(EXIT_FAILURE);
     }
 
     // encrypted data out file stream
-    std::ofstream edataOfs("encrypteddata.txt");
+    std::ofstream encryptedDataOfs("encrypteddata.txt");
     std::string userid;
     std::string password;
 
-    while (!rawdataIfs.eof())
+    while (!rawDataIfs.eof())
     {
-        rawdataIfs >> userid;
-        rawdataIfs >> password;
+        rawDataIfs >> userid;
+        rawDataIfs >> password;
 
-        std::string encryptedPwd = cipher.get_encrypted(password);
+        std::string encryptedPassword = cipher.get_encrypted(password);
 
-        hashTable.push(userid, encryptedPwd);
+        hashTable.push(userid, encryptedPassword);
 
-        edataOfs << std::left << std::setw(15) << userid << std::setw(15) << encryptedPwd << '\n';
+        encryptedDataOfs << std::left << std::setw(15) << userid << std::setw(15) << encryptedPassword << '\n';
     }
 
-    rawdataIfs.close();
-    edataOfs.close();
+    rawDataIfs.close();
+    encryptedDataOfs.close();
 }
 
 int main(int argc, char** argv)
 {
     HashTable<std::string> hashTable(40);
-    VigenereCipher cipher;
+    VigenereCipher cipher("jones");
 
     std::cout << "Creating encrypted passwords file and hash table. This make take a few seconds..." << std::endl;
 
     createRawDataFile();
     createEncryptedDataFile(cipher, hashTable);
 
-    std::ifstream ifs("rawdata.txt");
+    std::ifstream rawDataIfs("rawdata.txt");
 
-    if (!ifs.is_open())
+    if (!rawDataIfs.is_open())
     {
         std::cout << "The file encrypteddata.txt could not be opened!" << std::endl;
         return EXIT_FAILURE;
     }
 
-    int row = 0;
+    // keeps track of the lines we read in
+    // from the rawdata.txt so that we can
+    // use them later in the tables 
     Entry fileEntries[5];
+
+    int row = 0;
     std::string userid;
     std::string password;
 
-    while (!ifs.eof())
+    while (!rawDataIfs.eof())
     {
-        ifs >> userid;
-        ifs >> password;
+        rawDataIfs >> userid;
+        rawDataIfs >> password;
 
         switch (row)
         {
@@ -152,6 +171,12 @@ int main(int argc, char** argv)
         if (row > 8)
             break;
     }
+
+    /**
+     * ==============================================================
+     * | Everything below is for displaying a table to the terminal |
+     * ==============================================================
+     */
 
     std::cout << std::endl;
     std::cout << "Legal:\n" << std::endl;
