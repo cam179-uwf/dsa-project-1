@@ -28,16 +28,6 @@ VigenereCipher::~VigenereCipher()
     
 }
 
-VigenereCipher::VigenereCipher(const VigenereCipher& other)
-{
-    
-}
-
-VigenereCipher& VigenereCipher::operator=(const VigenereCipher& other)
-{
-    return *this;
-}
-
 std::string VigenereCipher::get_encrypted(const std::string& value)
 {
     for (auto c : value)
@@ -55,7 +45,15 @@ std::string VigenereCipher::get_encrypted(const std::string& value)
     for (auto c : value)
     {
         offset = _key[indexInKey] - 97;
-        result += (((c - 97) + offset) % 25) + 97;
+        int original = (c - 97);
+        int modified = original + offset;
+
+        if (modified > 25)
+        {
+            modified %= 26;
+        }
+
+        result += modified + 97;
 
         indexInKey = (indexInKey + 1) % _key.size();
     }
@@ -76,20 +74,19 @@ std::string VigenereCipher::get_decrypted(const std::string& value)
     std::string result;
     int indexInKey = 0;
     int offset;
-    int offsetAdded;
 
     for (auto c : value)
     {
         offset = _key[indexInKey] - 97;
-
-        offsetAdded = (c - 97) - offset;
-
-        if (offsetAdded < 0)
+        int original = (c - 97);
+        int modified = original - offset;
+        
+        if (modified < 0)
         {
-            offsetAdded = offsetAdded + 25;
+            modified = 25 - (-1 * modified - 1) % 26;
         }
 
-        result += ((offsetAdded) % 25) + 97;
+        result += modified + 97;
 
         indexInKey = (indexInKey + 1) % _key.size();
     }
